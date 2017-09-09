@@ -281,6 +281,19 @@ WeatherStationPlatform.prototype = {
 						service.setCharacteristic(CustomCharacteristic.ObservationStation, conditions['observation_location']['full']);
 						service.setCharacteristic(CustomCharacteristic.ObservationTime, conditions['observation_time_rfc822'].split(' ')[4]);
 						service.setCharacteristic(CustomCharacteristic.ConditionCategory, getConditionCategory(conditions['icon']));
+
+						debug("CurrentTemperature: " + conditions['temp_c']);
+						debug("CurrentRelativeHumidity: " + relativeHumidity);
+						debug("Condition: " + conditions['weather']);
+						debug("Rain1h: " + conditions['precip_1hr_metric']);
+						debug("RainDay: " + conditions['precip_today_metric']);
+						debug("WindDirection: " + conditions['wind_dir']);
+						debug("WindSpeed: " + conditions['wind_kph']);
+						debug("AirPressure: " + conditions['pressure_mb']);
+						debug("UVIndex: " + conditions['UV']);
+						debug("ObservationStation: " + JSON.stringify(conditions['observation_location'], null, 2));
+						debug("ObservationStationID: " + conditions['station_id']);
+						debug("ObservationTime: " + conditions['observation_time_rfc822'].split(' ')[4]);
 					}
 					else if (that.accessories[i].forecastService !== undefined && response['forecast'])
 					{
