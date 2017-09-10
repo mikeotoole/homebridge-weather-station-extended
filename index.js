@@ -1,10 +1,12 @@
 "use strict";
-var inherits = require('util').inherits, 
+const inherits = require('util').inherits, 
 debug = require('debug')('homebridge-weather-station-extended'),
 wunderground = require('wundergroundnode'),
+moment = require('moment');
 
-Service,
+var Service,
 Characteristic,
+FakeGatoHistoryService,
 
 CustomUUID = {
 	// Eve UUID
@@ -30,6 +32,7 @@ CustomUUID = {
 CustomCharacteristic = {};
 
 module.exports = function (homebridge) {
+	FakeGatoHistoryService = require('../fakegato-history/fakegato-history')(homebridge);
 	Service = homebridge.hap.Service;
 	Characteristic = homebridge.hap.Characteristic;
 	homebridge.registerPlatform("homebridge-wunderground-extended", "WeatherStation", WeatherStationPlatform);
@@ -274,6 +277,7 @@ WeatherStationPlatform.prototype = {
 						debug("Update values for " + that.accessories[i].currentConditionsService.displayName);
 						let conditions = response['current_observation'];
 						let service = that.accessories[i].currentConditionsService;
+						let historyService = that.accessories[i].historyService;
 
 						service.setCharacteristic(Characteristic.CurrentTemperature, conditions['temp_c']);
 						let relativeHumidity = parseInt(conditions['relative_humidity'].substr(0, conditions['relative_humidity'].length-1))
@@ -284,17 +288,24 @@ WeatherStationPlatform.prototype = {
 						let rainDay = parseInt(conditions['precip_today_metric']);
 						service.setCharacteristic(CustomCharacteristic.RainDay, isNaN(rainDay) ? 0 : rainDay);
 						service.setCharacteristic(CustomCharacteristic.WindDirection, conditions['wind_dir']);
-						service.setCharacteristic(CustomCharacteristic.WindSpeed,parseFloat(conditions['wind_kph']));
-						service.setCharacteristic(CustomCharacteristic.WindSpeedMax,parseFloat(conditions['wind_gust_kph']));
-						service.setCharacteristic(CustomCharacteristic.AirPressure,parseInt(conditions['pressure_mb']));
+						service.setCharacteristic(CustomCharacteristic.WindSpeed, parseFloat(conditions['wind_kph']));
+						service.setCharacteristic(CustomCharacteristic.WindSpeedMax, parseFloat(conditions['wind_gust_kph']));
+						service.setCharacteristic(CustomCharacteristic.AirPressure, parseInt(conditions['pressure_mb']));
 						let visibility = parseInt(conditions['visibility_km']);
-						service.setCharacteristic(CustomCharacteristic.Visibility,isNaN(visibility) ? 0 : visibility);
+						service.setCharacteristic(CustomCharacteristic.Visibility, isNaN(visibility) ? 0 : visibility);
 						let uvIndex = parseInt(conditions['UV']);
-						service.setCharacteristic(CustomCharacteristic.UVIndex,isNaN(uvIndex) ? 0 : uvIndex);
+						service.setCharacteristic(CustomCharacteristic.UVIndex, isNaN(uvIndex) ? 0 : uvIndex);
 						service.setCharacteristic(CustomCharacteristic.ObservationStation, conditions['observation_location']['full']);
 						service.setCharacteristic(CustomCharacteristic.ObservationStationID, conditions['station_id']);
 						service.setCharacteristic(CustomCharacteristic.ObservationTime, conditions['observation_time_rfc822'].split(' ')[4]);
 						service.setCharacteristic(CustomCharacteristic.ConditionCategory, getConditionCategory(conditions['icon']));
+
+						historyService.addEntry({
+							time: moment().unix(),
+							temp: conditions['temp_c'],
+							pressure: parseInt(conditions['pressure_mb']),
+							humidity: relativeHumidity
+						});
 
 						debug("CurrentTemperature: " + conditions['temp_c']);
 						debug("CurrentRelativeHumidity: " + relativeHumidity);
@@ -353,6 +364,7 @@ WeatherStationPlatform.prototype = {
 function CurrentConditionsWeatherAccessory(platform) {
 	this.platform = platform;
 	this.log = platform.log;
+	this.historyService = new FakeGatoHistoryService('weather', this);
 	this.name = "Now";
 
 	this.currentConditionsService = new Service.TemperatureSensor(this.name);
@@ -386,7 +398,7 @@ CurrentConditionsWeatherAccessory.prototype = {
 	},
 
 	getServices: function () {
-		return [this.informationService, this.currentConditionsService];
+		return [this.informationService, this.currentConditionsService, this.historyService];
 	},
 }
 
