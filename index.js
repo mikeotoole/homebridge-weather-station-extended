@@ -22,6 +22,7 @@ CustomUUID = {
 	Visibility: 'd24ecc1e-6fad-4fb5-8137-5af88bd5e857',
 	UVIndex: '05ba0fe0-b848-4226-906d-5b64272e05ce',
 	ObservationStation: 'd1b2787d-1fc4-4345-a20e-7b5a74d693ed',
+	ObservationStationID: 'ccb2787d-1fc4-af45-abce-7b5a12d693ed',
 	ObservationTime: '234fd9f1-1d33-4128-b622-d052f0c402af',
 	ChanceRain: 'fc01b24f-cf7e-4a74-90db-1b427af1ffa3',
 	ForecastDay: '57f1d4b2-0e7e-4307-95b5-808750e2c1c7'
@@ -187,6 +188,16 @@ module.exports = function (homebridge) {
 	};
 	inherits(CustomCharacteristic.ObservationStation, Characteristic);
 
+	CustomCharacteristic.ObservationStationID = function() {
+		Characteristic.call(this, 'Station ID', CustomUUID.ObservationStationID);
+		this.setProps({
+			format: Characteristic.Formats.STRING,
+			perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
+		});
+		this.value = this.getDefaultValue();
+	};
+	inherits(CustomCharacteristic.ObservationStationID, Characteristic);
+
 	CustomCharacteristic.ObservationTime = function() {
 		Characteristic.call(this, 'Observation Time', CustomUUID.ObservationTime);
 		this.setProps({
@@ -264,13 +275,14 @@ WeatherStationPlatform.prototype = {
 						let service = that.accessories[i].currentConditionsService;
 
 						service.setCharacteristic(Characteristic.CurrentTemperature, conditions['temp_c']);
-						service.setCharacteristic(Characteristic.CurrentRelativeHumidity, parseInt(conditions['relative_humidity'].substr(0, conditions['relative_humidity'].length-1)));
-						service.setCharacteristic(CustomCharacteristic.Condition,conditions['weather']);
+						let relativeHumidity = parseInt(conditions['relative_humidity'].substr(0, conditions['relative_humidity'].length-1))
+						service.setCharacteristic(Characteristic.CurrentRelativeHumidity, relativeHumidity);
+						service.setCharacteristic(CustomCharacteristic.Condition, conditions['weather']);
 						let rain1h = parseInt(conditions['precip_1hr_metric']);
-						service.setCharacteristic(CustomCharacteristic.Rain1h,isNaN(rain1h) ? 0 : rain1h);
+						service.setCharacteristic(CustomCharacteristic.Rain1h, isNaN(rain1h) ? 0 : rain1h);
 						let rainDay = parseInt(conditions['precip_today_metric']);
-						service.setCharacteristic(CustomCharacteristic.RainDay,isNaN(rainDay) ? 0 : rainDay);
-						service.setCharacteristic(CustomCharacteristic.WindDirection,conditions['wind_dir']);
+						service.setCharacteristic(CustomCharacteristic.RainDay, isNaN(rainDay) ? 0 : rainDay);
+						service.setCharacteristic(CustomCharacteristic.WindDirection, conditions['wind_dir']);
 						service.setCharacteristic(CustomCharacteristic.WindSpeed,parseFloat(conditions['wind_kph']));
 						service.setCharacteristic(CustomCharacteristic.WindSpeedMax,parseFloat(conditions['wind_gust_kph']));
 						service.setCharacteristic(CustomCharacteristic.AirPressure,parseInt(conditions['pressure_mb']));
@@ -279,6 +291,7 @@ WeatherStationPlatform.prototype = {
 						let uvIndex = parseInt(conditions['UV']);
 						service.setCharacteristic(CustomCharacteristic.UVIndex,isNaN(uvIndex) ? 0 : uvIndex);
 						service.setCharacteristic(CustomCharacteristic.ObservationStation, conditions['observation_location']['full']);
+						service.setCharacteristic(CustomCharacteristic.ObservationStationID, conditions['station_id']);
 						service.setCharacteristic(CustomCharacteristic.ObservationTime, conditions['observation_time_rfc822'].split(' ')[4]);
 						service.setCharacteristic(CustomCharacteristic.ConditionCategory, getConditionCategory(conditions['icon']));
 
@@ -354,6 +367,7 @@ function CurrentConditionsWeatherAccessory(platform) {
 	this.currentConditionsService.addCharacteristic(CustomCharacteristic.Visibility);
 	this.currentConditionsService.addCharacteristic(CustomCharacteristic.UVIndex);
 	this.currentConditionsService.addCharacteristic(CustomCharacteristic.ObservationStation);
+	this.currentConditionsService.addCharacteristic(CustomCharacteristic.ObservationStationID);
 	this.currentConditionsService.addCharacteristic(CustomCharacteristic.ObservationTime);
 
 	this.informationService = new Service.AccessoryInformation();
