@@ -73,6 +73,8 @@ The parameter **forecast** sets which forecasts you want to see. You can set one
 
 You can also use a station from the **[Personal Weather Station Network](https://www.wunderground.com/weatherstation/overview.asp)** to receive weather information. Just enter pws:YOURID in the location parameter.
 
+The parameter **serialNumber** allows you to set a custom serial number for the accessory. The default value is the value given for **location**.
+
 ```json
 "platforms": [
 	{
@@ -81,7 +83,8 @@ You can also use a station from the **[Personal Weather Station Network](https:/
 		"interval": "4",
 		"key": "XXXXXXXXXXXXXXX",
 		"location": "pws:ICALIFOR123",
-		"forecast": "3days"
+		"forecast": "3days",
+		"serialNumber": "123456"
 	}
 ]
 ```

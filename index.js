@@ -223,6 +223,7 @@ function WeatherStationPlatform(log, config) {
 	this.log = log;
 	this.config = config;
 	this.location = config['location'];
+	this.serialNumber = ('serialNumber' in config ? config['serialNumber'] : config['location']);
 	this.forecastDays = ('forecast' in config ? config['forecast'] : '');
 	this.station = new wunderground(config['key']);
 	this.interval = ('interval' in config ? parseInt(config['interval']) : 4);
@@ -375,7 +376,7 @@ function CurrentConditionsWeatherAccessory(platform) {
 	.setCharacteristic(Characteristic.Name, this.name)
 	.setCharacteristic(Characteristic.Manufacturer, "Homebridge")
 	.setCharacteristic(Characteristic.Model, "Weather Underground")
-	.setCharacteristic(Characteristic.SerialNumber, this.location);
+	.setCharacteristic(Characteristic.SerialNumber, platform.serialNumber);
 }
 
 CurrentConditionsWeatherAccessory.prototype = {
@@ -425,7 +426,7 @@ function ForecastWeatherAccessory(platform, day) {
 	.setCharacteristic(Characteristic.Name, "Weather Forecast")
 	.setCharacteristic(Characteristic.Manufacturer, "Homebridge")
 	.setCharacteristic(Characteristic.Model, "Weather Underground")
-	.setCharacteristic(Characteristic.SerialNumber, this.location);
+	.setCharacteristic(Characteristic.SerialNumber, platform.serialNumber);
 }
 
 ForecastWeatherAccessory.prototype = {
